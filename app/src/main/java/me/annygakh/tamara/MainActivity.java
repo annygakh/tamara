@@ -1,15 +1,31 @@
 package me.annygakh.tamara;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+
+import java.util.List;
+
+import me.annygakh.tamara.model.Meal;
 
 public class MainActivity extends AppCompatActivity {
+    private final static String LOG_TAG = MainActivity.class.getSimpleName();
+    public final static int REQUEST_IMAGE_CAPTURE = 1;
+
+    private RecyclerView mRecyclerView;
+    private RecyclerView.Adapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
+
+    private View.OnClickListener photoLaunchingCallback;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,15 +34,36 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        photoLaunchingCallback = new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+            public void onClick(View v) {
+                // launch photo taking activity
+                Intent takePhotoIntent = new Intent(MainActivity.this, PhotoTakingActivity.class);
+                startActivity(takePhotoIntent);
             }
-        });
+        };
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+//        fab.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", photoLaunchingCallback).show();
+//            }
+//        });
+        fab.setOnClickListener(photoLaunchingCallback);
+        setupAdapter();
     }
+
+    private void setupAdapter() {
+        mRecyclerView = (RecyclerView) findViewById(R.id.meals_recycler_view);
+        mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+        List<Meal> meals = MealService.getInstance().getMeals();
+        mAdapter = new CardAdapter(meals);
+        mRecyclerView.setAdapter(mAdapter);
+
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -49,4 +86,15 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        CardAdapter adapter = (CardAdapter) mRecyclerView.getAdapter();
+        List<Meal> meals = MealService.getInstance().getMeals();
+        adapter.setMeals(meals);
+        adapter.notifyDataSetChanged();
+
+    }
+
 }
